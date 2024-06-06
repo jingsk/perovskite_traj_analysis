@@ -14,14 +14,14 @@ def cart_squared_distance(p1, p2):
 def gaussian_at_r(r2,sig):
     return 1/sig/np.sqrt(2*np.pi)*np.exp(-r2/(2*sig**2))
 
-def H_r(Ni_idx, H_idx, pos):
+def H_r(Ni_idx, H_idx, pos, sig):
     H_r = []
     for i in tqdm(Ni_idx):
         H_conc = 0
         for j in H_idx:
             H_conc += gaussian_at_r(r2 = cart_squared_distance(pos[i], pos[j]),
-                                    sig = 1.5)
-    H_r.append(H_conc)
+                                    sig = sig)
+        H_r.append(H_conc)
     return H_r
 
 
@@ -32,7 +32,8 @@ if __name__ == "__main__":
     
     H_r = H_r(Ni_idx = Ni_idx,
               H_idx = np.array([atom.index for atom in atoms if atom.symbol=='H']),
-              pos = atoms.get_positions()
+              pos = atoms.get_positions(),
+              sig = 3
         )
     np.savetxt('H_r.csv', 
                np.vstack([Ni_idx, H_r]).T, 
