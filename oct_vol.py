@@ -5,7 +5,8 @@ from ase.neighborlist import neighbor_list
 import sys
 from tqdm import tqdm
 
-def trim(src, 
+def trim(atoms,
+         src, 
          dst, 
          vec, 
          species= 'O', 
@@ -45,7 +46,7 @@ def oct_vol(Ni_idx, atoms, r_max):
         vec = edge_vector[edge_src==src]
         #print(dst)
         #print(vec)
-        mask = trim(src, dst, vec)
+        mask = trim(atoms, src, dst, vec)
         points = vec[mask]
         oct_dst.append(dst[mask])
         oct_points.append(points)
