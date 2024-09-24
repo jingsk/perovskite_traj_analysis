@@ -1,13 +1,8 @@
-#so empty
-from ase.io import read
 import numpy as np
-import matplotlib.pyplot as plt
 from tqdm import tqdm
-import sys
 from matscipy.neighbours import mic
-from ase.io import read
-from matplotlib import cm
 from .utils import gaussian
+from .plotter import plot_acf_2d
 
 def d_to_acf(r_t0_t_it0_j0, r_cut = 5.0,grid_size=201):
     r_grid = np.linspace(0,r_cut, grid_size)
@@ -44,35 +39,10 @@ def hv_Gd(traj):
         acf_t.append(acf_t_idx/r_t_it0_j0.shape[0])
     return r_grid, acf_t
 
-def plot_acf_2d(time, r, acf_t, ax):
-    #fig, ax = plt.subplots(figsize=[3, 2.25])
-    x, y = np.meshgrid(time,r)
-    Z = np.array(acf_t).T
-    vmax = 3*acf_t[0][-1]
-    norm = cm.colors.Normalize(vmax=vmax, vmin=0)
-    levels = np.linspace(0.0, vmax, 11)
-    pos = ax.contourf(
-        x, y, Z,
-        levels = levels,
-        norm=norm,
-        #extent=(x.min(), x.max(), y.min(), y.max()), 
-        cmap='Blues', 
-        extend = 'max',
-        #vmin=0, 
-        #vmax=0.001, 
-        #interpolation='nearest'
-    )
-
-    ax.set_ylim(top=3.5)
-    ax.set_ylabel(r'r ($\AA{}$)')
-    ax.set_xlabel('time (ps)')
-    cbar = plt.colorbar(pos, ax=ax)
-    cbar.ax.set_yticklabels([])
-    cbar.ax.set_ylabel(r'G$_{d}(r,t)$', rotation=270)
-    # fig.tight_layout()
-    # fig.savefig(fig_name, dpi=300)
-
 if __name__ == '__main__':
+    from ase.io import read
+    import matplotlib.pyplot as plt
+    import sys
     traj_name = sys.argv[1]
     traj = read('./traj/'+traj_name, '20:121')
     time_step = 2 #ps
