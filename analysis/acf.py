@@ -1,18 +1,15 @@
 #so empty
 from ase.io import read
-from ase.visualize import view
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import sys
-from matscipy.neighbours import neighbour_list, mic
+from matscipy.neighbours import mic
 from ase.io import read
 from matplotlib import cm
+from .utils import gaussian
 
-def gaussian(x, mu, sig):
-    return 1/sig/np.sqrt(2*np.pi)*np.exp(-(x-mu)**2/(2*sig**2))
-
-def d_to_acf2(r_t0_t_it0_j0, r_cut = 5.0,grid_size=201):
+def d_to_acf(r_t0_t_it0_j0, r_cut = 5.0,grid_size=201):
     r_grid = np.linspace(0,r_cut, grid_size)
     acf_t = np.zeros([r_t0_t_it0_j0.shape[0],grid_size])
     for t, r_it0_j0 in enumerate(r_t0_t_it0_j0):
@@ -27,19 +24,15 @@ def d_to_acf2(r_t0_t_it0_j0, r_cut = 5.0,grid_size=201):
     acf_t = acf_t.sum(axis=0)
     return r_grid, acf_t
         
-def hv_acf_d_time_average(traj):
+def hv_Gd(traj):
     n_atoms = len(traj[0])
     n_time = len(traj)
     acf_t = []
     for t_lag_idx in tqdm(range(n_time)):
         r_t_it0_j0 = np.zeros([n_time-t_lag_idx, n_atoms,n_atoms])
-        #for t_idx, atoms_t in enumerate(tqdm(traj)):
-        #print(len(traj[t0_idx:]))
         for t_idx in range(n_time-t_lag_idx):
-            #r_it0_j0 = np.zeros([n_atoms,n_atoms])
             atoms_t = traj[t_idx]
             atoms_t0 = traj[t_idx + t_lag_idx]
-            #print(t_idx, t_idx + t_lag_idx)
             for i in range(n_atoms):
                 dis_vec = np.vstack([
                     atoms_t0.get_positions()[:i], 
@@ -47,14 +40,12 @@ def hv_acf_d_time_average(traj):
                     atoms_t0.get_positions()[i+1:]]
                     ) - atoms_t.get_positions()[i]
                 r_t_it0_j0[t_idx, i] = np.linalg.norm(mic(dis_vec, atoms_t.cell),axis=1)
-        r_grid, acf_t_idx = d_to_acf2(r_t_it0_j0, r_cut = 4.0,grid_size=201)
+        r_grid, acf_t_idx = d_to_acf(r_t_it0_j0, r_cut = 4.0,grid_size=201)
         acf_t.append(acf_t_idx/r_t_it0_j0.shape[0])
-        #acf_t.append(d_to_acf2(r_t_it0_j0)[1])
-        #acf.append(np.average(rdf_i, axis=0))
     return r_grid, acf_t
 
-def plot_acf_2d(time, r, acf_t, fig_name):
-    fig, ax = plt.subplots(figsize=[3, 2.25])
+def plot_acf_2d(time, r, acf_t, ax):
+    #fig, ax = plt.subplots(figsize=[3, 2.25])
     x, y = np.meshgrid(time,r)
     Z = np.array(acf_t).T
     vmax = 3*acf_t[0][-1]
@@ -75,19 +66,21 @@ def plot_acf_2d(time, r, acf_t, fig_name):
     ax.set_ylim(top=3.5)
     ax.set_ylabel(r'r ($\AA{}$)')
     ax.set_xlabel('time (ps)')
-    cbar = fig.colorbar(pos, ax=ax)
+    cbar = plt.colorbar(pos, ax=ax)
     cbar.ax.set_yticklabels([])
     cbar.ax.set_ylabel(r'G$_{d}(r,t)$', rotation=270)
-    fig.tight_layout()
-    print(fig_name)
-    fig.savefig(fig_name, dpi=300)
+    # fig.tight_layout()
+    # fig.savefig(fig_name, dpi=300)
 
 if __name__ == '__main__':
     traj_name = sys.argv[1]
     traj = read('./traj/'+traj_name, '20:121')
     time_step = 2 #ps
-    r, acf_t = hv_acf_d_time_average(
+    fig, ax = plt.subplots(figsize=[3,2.25])
+    r, acf_t = hv_Gd(
         [atoms[[atom.index for atom in atoms if atom.symbol=='H']] for atoms in traj]
         )
     time = 2* np.arange(len(traj))
-    plot_acf_2d(time, r, acf_t, traj_name[:-5]+'.png')
+    plot_acf_2d(time, r, acf_t, ax)
+    fig.tight_layout()
+    fig.savefig(traj_name[:-5]+'.png', dpi=300)
