@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from matscipy.neighbours import mic
 from .utils import gaussian
-from .plotter import plot_acf_2d
+from pyrovskite.plotter import plot_acf_2d
 
 def d_to_acf(r_t0_t_it0_j0, r_cut = 5.0,grid_size=201):
     r_grid = np.linspace(0,r_cut, grid_size)
@@ -53,4 +53,4 @@ if __name__ == '__main__':
     time = 2* np.arange(len(traj))
     plot_acf_2d(time, r, acf_t, ax)
     fig.tight_layout()
-    fig.savefig(traj_name[:-5]+'.png', dpi=300)
+    fig.savefig('acf.png', dpi=300)
